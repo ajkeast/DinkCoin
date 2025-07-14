@@ -1,0 +1,20 @@
+{
+  "name": "dink-coin",
+  "version": "1.0.0",
+  "description": "Dink Coin (DINK) Polygon ERC-20 smart contracts and deployment scripts.",
+  "main": "scripts/deploy.js",
+  "scripts": {
+    "test": "npx hardhat test"
+  },
+  "dependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "@openzeppelin/contracts": "^4.9.3",
+    "dotenv": "^16.3.1",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.22.0"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0"
+  }
+} 
