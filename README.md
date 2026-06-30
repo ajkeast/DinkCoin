@@ -86,14 +86,35 @@ dink-coin/
    - `DINK_COIN_ADDRESS`: Address of the `DinkCoin` contract.
    - `WALLET_MANAGER_ADDRESS`: Address of the `WalletManager` contract.
 
+## Deployment (Polygon Mumbai)
+
+1. Copy `.env.example` to `.env` and set `POLYGON_RPC_URL` and `PRIVATE_KEY`.
+2. Fund the deployer wallet with test MATIC from a Mumbai faucet.
+3. Install and test:
+
+   ```bash
+   npm install
+   npx hardhat test
+   npx hardhat run scripts/deploy.js --network mumbai
+   ```
+
+4. Copy the printed addresses into the Discord bot `.env`:
+   - `DINK_COIN_ADDRESS`
+   - `WALLET_MANAGER_ADDRESS`
+5. Set the same wallet's private key as `BOT_WALLET_PRIVATE_KEY` in the Discord bot (this wallet owns `WalletManager` and signs mint/transfer txs).
+6. Run the MySQL schema in the Discord bot repo: `scripts/dinkcoin_schema.sql`.
+
+**Note:** `deploy.js` transfers `DinkCoin` ownership to `WalletManager` so minting works through the wallet manager contract.
+
 ## Bot Integration
 
-The Discord bot (in a separate repository) must:
+The Discord bot calls:
 
-- Use `ethers.js` to interact with the deployed `DinkCoin` and `WalletManager` contracts.
-- Include the contract ABIs and addresses in its configuration.
-- Call `WalletManager.assignTempWallet` to assign temporary wallets and `WalletManager.mintToTempWallet` to mint tokens.
-- Securely store the admin private key and Polygon RPC URL in a `.env` file.
+- `WalletManager.mintToTempWallet(discordId, amount)` after a successful `_1st` claim
+- `WalletManager.transferTempBalance(fromId, toId, amount)` for `_pay` transfers
+- `WalletManager.getTempBalance(discordId)` for on-chain balance checks
+
+Bot commands: `_balance`, `_ledger`, `_pay @user <amount>`.
 
 ## Testing
 

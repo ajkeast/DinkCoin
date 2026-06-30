@@ -19,9 +19,9 @@ async function main() {
   await walletManager.deployed();
   console.log("WalletManager deployed to:", walletManager.address);
 
-  // (Optional) Transfer ownership of DinkCoin to WalletManager if you want only WalletManager to mint
-  // await dinkCoin.transferOwnership(walletManager.address);
-  // console.log("DinkCoin ownership transferred to WalletManager");
+  // Transfer ownership of DinkCoin to WalletManager so it can mint
+  await dinkCoin.transferOwnership(walletManager.address);
+  console.log("DinkCoin ownership transferred to WalletManager");
 
   // Print summary
   console.log("--- Deployment Complete ---");

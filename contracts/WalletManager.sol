@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./DinkCoin.sol";
 
 /// @title WalletManager - Manages temporary wallets and token transfers for Dink Coin
 contract WalletManager is Ownable {
-    IERC20 public dinkCoin;
+    DinkCoin public dinkCoin;
     address public dinkCoinMinter;
 
     // Discord ID => temp DINK balance
@@ -22,9 +22,14 @@ contract WalletManager is Ownable {
         address indexed to,
         uint256 amount
     );
+    event TransferredBetweenUsers(
+        uint256 indexed fromDiscordId,
+        uint256 indexed toDiscordId,
+        uint256 amount
+    );
 
     constructor(address _dinkCoin, address _dinkCoinMinter) {
-        dinkCoin = IERC20(_dinkCoin);
+        dinkCoin = DinkCoin(_dinkCoin);
         dinkCoinMinter = _dinkCoinMinter;
     }
 
@@ -37,12 +42,12 @@ contract WalletManager is Ownable {
         address userWallet = userWallets[discordId];
         if (userWallet != address(0)) {
             // User has claimed before, mint directly to their wallet
-            DinkCoin(dinkCoin).mint(userWallet, amount);
+            dinkCoin.mint(userWallet, amount);
             emit MintedToTempWallet(discordId, amount); // Optionally, emit a different event
         } else {
             require(!hasClaimed[discordId], "Already claimed");
             // Mint tokens to this contract (WalletManager) as holder
-            DinkCoin(dinkCoin).mint(address(this), amount);
+            dinkCoin.mint(address(this), amount);
             tempBalances[discordId] += amount;
             emit MintedToTempWallet(discordId, amount);
         }
@@ -61,13 +66,27 @@ contract WalletManager is Ownable {
         emit Claimed(discordId, to, amount);
     }
 
+    /// @notice Transfer tokens between Discord users' temp balances
+    /// @dev Only callable by the owner (bot admin)
+    function transferTempBalance(
+        uint256 fromDiscordId,
+        uint256 toDiscordId,
+        uint256 amount
+    ) external onlyOwner {
+        require(fromDiscordId != toDiscordId, "Cannot transfer to self");
+        require(amount > 0, "Amount must be positive");
+        require(!hasClaimed[fromDiscordId], "Sender has claimed");
+        require(!hasClaimed[toDiscordId], "Recipient has claimed");
+        require(tempBalances[fromDiscordId] >= amount, "Insufficient balance");
+
+        tempBalances[fromDiscordId] -= amount;
+        tempBalances[toDiscordId] += amount;
+
+        emit TransferredBetweenUsers(fromDiscordId, toDiscordId, amount);
+    }
+
     /// @notice Get the temp balance for a Discord ID
     function getTempBalance(uint256 discordId) external view returns (uint256) {
         return tempBalances[discordId];
     }
 }
-
-interface DinkCoin {
-    function mint(address to, uint256 amount) external;
-}
-// ... implementation to be added ...
